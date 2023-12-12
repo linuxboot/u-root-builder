@@ -1,0 +1,44 @@
+name: u-root-publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish:
+    strategy:
+      matrix:
+        template: [core, all, embedded, minimal]
+        arch: [amd64, arm, arm64, riscv64]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        repository: u-root/u-root
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Build
+      run: |
+        go build .
+        GOARCH=${{ matrix.arch }} ./u-root -uroot-source . \
+          -o ${{ matrix.arch }}-${{ matrix.template }}.cpio \
+          ${{ matrix.template }}
+        xz --check=crc32 -9 --lzma2=dict=1MiB \
+          --stdout ${{ matrix.arch }}-${{ matrix.template }}.cpio | \
+          dd conv=sync bs=512 \
+          of=${{ matrix.arch }}-${{ matrix.template }}.cpio.xz
+
+    - name: Upload
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        file: ${{ matrix.arch }}-${{ matrix.template }}.cpio.xz
+        asset_name: u-root_${{ matrix.arch }}_${{ matrix.template }}.cpio.xz
