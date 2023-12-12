@@ -33,3 +33,5 @@ Run a command:
 ```sh
 uname -a
 ```
+
+![asciinema recording of u-root](u-root.gif)
