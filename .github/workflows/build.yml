@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        template: [core, boot, all, embedded, minimal]
+        template: [core, all, embedded, minimal]
         arch: [amd64, arm, arm64, riscv64]
 
     runs-on: ubuntu-latest
@@ -26,8 +26,9 @@ jobs:
         go-version: '1.20'
 
     - name: Build
-      run:
-        GOARCH=${{ matrix.arch }} go run . -uroot-source . -o u-root-${{ matrix.arch }}-${{ matrix.template }}.cpio ${{ matrix.template }}
+      run: |
+        go build .
+        GOARCH=${{ matrix.arch }} ./u-root -uroot-source . -o u-root-${{ matrix.arch }}-${{ matrix.template }}.cpio ${{ matrix.template }}
 
     - name: Upload
       uses: actions/upload-artifact@v3.1.3
